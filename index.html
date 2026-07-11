@@ -112,6 +112,33 @@
         .btn-secondary:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
         .btn-icon { font-size: 18px; }
 
+        .btn-random {
+            padding: 12px 24px; font-size: 15px; font-weight: 600; font-family: inherit;
+            border: none; border-radius: 100px; cursor: pointer; transition: var(--transition);
+            display: inline-flex; align-items: center; gap: 8px;
+            background: linear-gradient(135deg, #5e5ce6, #bf5af2); color: #fff;
+            box-shadow: 0 4px 16px rgba(94, 92, 230, 0.3);
+        }
+        .btn-random:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(94, 92, 230, 0.4); }
+        .btn-random:active { transform: scale(0.95); }
+
+        .btn-random-sm {
+            width: 44px; height: 44px; font-size: 20px;
+            border: 1px solid var(--border); border-radius: 50%; cursor: pointer;
+            background: rgba(255,255,255,0.06); color: var(--text-primary);
+            display: inline-flex; align-items: center; justify-content: center;
+            transition: var(--transition);
+        }
+        .btn-random-sm:hover { background: rgba(255,255,255,0.12); transform: rotate(180deg); }
+
+        .keyword-preview {
+            margin-top: 16px; padding: 16px 20px;
+            background: rgba(94, 92, 230, 0.1); border: 1px solid rgba(94, 92, 230, 0.3);
+            border-radius: var(--radius-sm); animation: fadeIn 0.3s ease;
+        }
+        .keyword-preview-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #bf5af2; margin-bottom: 6px; }
+        .keyword-preview-text { font-size: 17px; font-weight: 500; color: var(--text-primary); line-height: 1.4; }
+
         .output-section { opacity: 0; transform: translateY(20px); transition: all 0.5s cubic-bezier(0.25,0.1,0.25,1); pointer-events: none; }
         .output-section.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
         .output-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 12px; }
@@ -173,10 +200,22 @@
         <!-- Keyword Selection -->
         <div class="card">
             <div class="card-title">Keyword Library</div>
-            <label for="keywordSelect">เลือกจากคลังคีย์เวิร์ด</label>
+            <label for="keywordSelect">เลือกจากคลังคีย์เวิร์ด หรือกดสุ่ม</label>
             <select id="keywordSelect">
                 <option value="">-- เลือก Keyword --</option>
             </select>
+            <div style="margin-top: 16px; display: flex; align-items: center; gap: 12px;">
+                <button class="btn btn-random" onclick="randomKeyword()">
+                    <span class="btn-icon">🎲</span> สุ่ม Keyword
+                </button>
+                <button class="btn btn-random-sm" onclick="randomKeyword()" title="สุ่มใหม่" id="rerollBtn" style="display:none;">
+                    🔄
+                </button>
+            </div>
+            <div class="keyword-preview" id="keywordPreview" style="display:none;">
+                <div class="keyword-preview-label">Keyword ที่สุ่มได้:</div>
+                <div class="keyword-preview-text" id="keywordPreviewText"></div>
+            </div>
         </div>
 
         <!-- Style Selection -->
@@ -561,20 +600,42 @@
         return templates[Math.floor(Math.random() * templates.length)];
     }
 
+    function randomKeyword() {
+        let keywords = selectedCategory === 'all' ? getAllKeywords() : (keywordDB[selectedCategory] || []);
+        if (keywords.length === 0) return;
+
+        const randomKw = keywords[Math.floor(Math.random() * keywords.length)];
+
+        // Show preview
+        const preview = document.getElementById('keywordPreview');
+        const previewText = document.getElementById('keywordPreviewText');
+        const rerollBtn = document.getElementById('rerollBtn');
+
+        previewText.textContent = randomKw;
+        preview.style.display = 'block';
+        rerollBtn.style.display = 'inline-flex';
+
+        // Set dropdown to match
+        const select = document.getElementById('keywordSelect');
+        select.value = randomKw;
+
+        // Add animation
+        preview.style.animation = 'none';
+        preview.offsetHeight; // trigger reflow
+        preview.style.animation = 'fadeIn 0.3s ease';
+    }
+
     function generatePrompt() {
         const customKeyword = document.getElementById('customKeyword').value.trim();
         const selectedKeyword = document.getElementById('keywordSelect').value;
+        const previewText = document.getElementById('keywordPreviewText').textContent;
 
-        let keyword = customKeyword || selectedKeyword;
+        let keyword = customKeyword || selectedKeyword || previewText;
 
         if (!keyword) {
-            // Random from selected category
-            let keywords = selectedCategory === 'all' ? getAllKeywords() : (keywordDB[selectedCategory] || []);
-            if (keywords.length === 0) {
-                showOutput('กรุณาเลือกหมวดหมู่หรือพิมพ์ keyword');
-                return;
-            }
-            keyword = keywords[Math.floor(Math.random() * keywords.length)];
+            // Auto-random if nothing selected
+            randomKeyword();
+            keyword = document.getElementById('keywordPreviewText').textContent;
         }
 
         const styleName = styleNames[selectedStyle] || "Realistic style";

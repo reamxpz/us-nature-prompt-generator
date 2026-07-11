@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>US Nature Prompt Generator</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        :root {
+            --bg-primary: #000000;
+            --bg-secondary: #1d1d1f;
+            --bg-card: rgba(255, 255, 255, 0.05);
+            --bg-card-hover: rgba(255, 255, 255, 0.08);
+            --text-primary: #f5f5f7;
+            --text-secondary: #a1a1a6;
+            --text-muted: #6e6e73;
+            --accent: #2997ff;
+            --accent-hover: #0077ed;
+            --accent-glow: rgba(41, 151, 255, 0.3);
+            --green: #30d158;
+            --green-glow: rgba(48, 209, 88, 0.3);
+            --border: rgba(255, 255, 255, 0.1);
+            --radius: 16px;
+            --radius-sm: 12px;
+            --transition: all 0.3s cubic-bezier(0.25, 0.1, 0.25, 1);
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text', 'Helvetica Neue', Arial, sans-serif;
+            background: var(--bg-primary); color: var(--text-primary);
+            min-height: 100vh; line-height: 1.5; -webkit-font-smoothing: antialiased;
+        }
+
+        .bg-gradient { position: fixed; top: 0; left: 0; width: 100%; height: 100%; z-index: -1; overflow: hidden; }
+        .bg-gradient::before {
+            content: ''; position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(ellipse at 30% 20%, rgba(41,151,255,0.08) 0%, transparent 50%),
+                        radial-gradient(ellipse at 70% 80%, rgba(48,209,88,0.05) 0%, transparent 50%),
+                        radial-gradient(ellipse at 50% 50%, rgba(94,92,230,0.05) 0%, transparent 50%);
+            animation: gradientShift 20s ease-in-out infinite;
+        }
+        @keyframes gradientShift {
+            0%, 100% { transform: translate(0,0) rotate(0deg); }
+            33% { transform: translate(-5%,5%) rotate(1deg); }
+            66% { transform: translate(5%,-5%) rotate(-1deg); }
+        }
+
+        .container { max-width: 720px; margin: 0 auto; padding: 60px 24px 80px; }
+
+        .header { text-align: center; margin-bottom: 56px; }
+        .header-icon { font-size: 48px; margin-bottom: 16px; display: inline-block; animation: float 3s ease-in-out infinite; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+        .header h1 {
+            font-size: 40px; font-weight: 700; letter-spacing: -0.02em;
+            background: linear-gradient(135deg, #f5f5f7 0%, #a1a1a6 100%);
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; margin-bottom: 8px;
+        }
+        .header p { font-size: 17px; color: var(--text-secondary); font-weight: 400; }
+
+        .card {
+            background: var(--bg-card); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+            border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 32px; margin-bottom: 20px; transition: var(--transition);
+        }
+        .card:hover { background: var(--bg-card-hover); border-color: rgba(255,255,255,0.15); }
+        .card-title { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 16px; }
+
+        label { display: block; font-size: 15px; font-weight: 500; color: var(--text-secondary); margin-bottom: 8px; }
+
+        select, input[type="number"], textarea {
+            width: 100%; padding: 14px 18px; font-size: 16px; font-family: inherit;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-primary);
+            outline: none; transition: var(--transition); appearance: none; -webkit-appearance: none;
+        }
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23a1a1a6' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+            background-repeat: no-repeat; background-position: right 16px center; padding-right: 44px; cursor: pointer;
+        }
+        select:focus, input:focus, textarea:focus { border-color: var(--accent); box-shadow: 0 0 0 4px var(--accent-glow); background: rgba(255,255,255,0.08); }
+        select option { background: var(--bg-secondary); color: var(--text-primary); }
+        textarea { resize: vertical; min-height: 100px; }
+        input[type="number"] { max-width: 140px; }
+
+        .chip-grid { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+        .chip {
+            padding: 10px 18px; font-size: 14px; font-weight: 500;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            border-radius: 100px; color: var(--text-secondary);
+            cursor: pointer; transition: var(--transition); user-select: none;
+        }
+        .chip:hover { background: rgba(255,255,255,0.1); color: var(--text-primary); }
+        .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; box-shadow: 0 4px 16px var(--accent-glow); }
+
+        .custom-count-input { display: none; margin-top: 12px; }
+        .custom-count-input.show { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .btn-group { display: flex; gap: 12px; margin-top: 8px; }
+        .btn {
+            flex: 1; padding: 16px 28px; font-size: 16px; font-weight: 600; font-family: inherit;
+            border: none; border-radius: var(--radius-sm); cursor: pointer; transition: var(--transition);
+            display: flex; align-items: center; justify-content: center; gap: 10px; position: relative; overflow: hidden;
+        }
+        .btn::before { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%); opacity: 0; transition: var(--transition); }
+        .btn:hover::before { opacity: 1; }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: var(--accent); color: #fff; box-shadow: 0 4px 20px var(--accent-glow); }
+        .btn-primary:hover { background: var(--accent-hover); box-shadow: 0 6px 28px var(--accent-glow); transform: translateY(-1px); }
+        .btn-secondary { background: rgba(255,255,255,0.1); color: var(--text-primary); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
+        .btn-icon { font-size: 18px; }
+
+        .output-section { opacity: 0; transform: translateY(20px); transition: all 0.5s cubic-bezier(0.25,0.1,0.25,1); pointer-events: none; }
+        .output-section.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
+        .output-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 12px; }
+        .output-box {
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); padding: 20px; min-height: 200px;
+            font-size: 14px; line-height: 1.7; color: var(--text-secondary);
+            white-space: pre-wrap; word-break: break-word; transition: var(--transition);
+        }
+        .output-box:hover { border-color: rgba(255,255,255,0.15); }
+
+        .toast {
+            position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: rgba(48,209,88,0.95); backdrop-filter: blur(20px);
+            color: #fff; padding: 14px 28px; border-radius: 100px; font-size: 15px; font-weight: 600;
+            box-shadow: 0 8px 32px var(--green-glow); transition: all 0.4s cubic-bezier(0.25,0.1,0.25,1);
+            z-index: 1000; pointer-events: none;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); }
+
+        @media (max-width: 640px) {
+            .container { padding: 40px 16px 60px; }
+            .header h1 { font-size: 28px; }
+            .card { padding: 24px; }
+            .btn-group { flex-direction: column; }
+            .chip { padding: 8px 14px; font-size: 13px; }
+        }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div class="bg-gradient"></div>
+    <div class="container">
+        <div class="header">
+            <div class="header-icon">🇺🇸</div>
+            <h1>US Nature Prompt Generator</h1>
+            <p>Generate ready-to-use image prompts for iPhone wallpapers</p>
+        </div>
+
+        <!-- Category Selection -->
+        <div class="card">
+            <div class="card-title">Category / หมวดหมู่</div>
+            <label>เลือกหมวดหมู่ก่อนสุ่ม</label>
+            <div class="chip-grid" id="categoryGrid">
+                <div class="chip active" data-category="all">🌎 ทั้งหมด</div>
+                <div class="chip" data-category="national_parks">🏞️ National Parks</div>
+                <div class="chip" data-category="mountains">🏔️ Mountains</div>
+                <div class="chip" data-category="deserts">🏜️ Deserts</div>
+                <div class="chip" data-category="coasts">🌊 Coasts & Ocean</div>
+                <div class="chip" data-category="forests">🌲 Forests</div>
+                <div class="chip" data-category="lakes">💧 Lakes & Rivers</div>
+                <div class="chip" data-category="wildlife">🦅 Wildlife</div>
+                <div class="chip" data-category="seasons">🍂 Seasons</div>
+            </div>
+        </div>
+
+        <!-- Keyword Selection -->
+        <div class="card">
+            <div class="card-title">Keyword Library</div>
+            <label for="keywordSelect">เลือกจากคลังคีย์เวิร์ด</label>
+            <select id="keywordSelect">
+                <option value="">-- เลือก Keyword --</option>
+            </select>
+        </div>
+
+        <!-- Style Selection -->
+        <div class="card">
+            <div class="card-title">Style / สไตล์ภาพ</div>
+            <label>เลือกสไตล์ภาพ</label>
+            <div class="chip-grid" id="styleGrid">
+                <div class="chip active" data-style="realistic">📷 Realistic</div>
+                <div class="chip" data-style="dark_moody">🌑 Dark & Moody</div>
+                <div class="chip" data-style="cinematic">🎬 Cinematic</div>
+                <div class="chip" data-style="fine_art">🖼️ Fine Art</div>
+                <div class="chip" data-style="ethereal">✨ Ethereal</div>
+                <div class="chip" data-style="aerial">🛩️ Aerial</div>
+                <div class="chip" data-style="long_exposure">💫 Long Exposure</div>
+                <div class="chip" data-style="analog_film">📼 Analog Film</div>
+                <div class="chip" data-style="minimalist">◻️ Minimalist</div>
+                <div class="chip" data-style="bw">⬛ Black & White</div>
+                <div class="chip" data-style="golden_hour">🌅 Golden Hour</div>
+                <div class="chip" data-style="astro">🌌 Astrophotography</div>
+                <div class="chip" data-style="infrared">🔴 Infrared</div>
+                <div class="chip" data-style="watercolor">🎨 Watercolor</div>
+                <div class="chip" data-style="oil_painting">🖌️ Oil Painting</div>
+                <div class="chip" data-style="surreal">🌀 Surreal</div>
+            </div>
+        </div>
+
+        <!-- Count Selection -->
+        <div class="card">
+            <div class="card-title">Image Count</div>
+            <label>จำนวนภาพ (Count)</label>
+            <div class="chip-grid" id="countGrid">
+                <div class="chip" data-value="5">5</div>
+                <div class="chip" data-value="10">10</div>
+                <div class="chip" data-value="15">15</div>
+                <div class="chip active" data-value="20">20</div>
+                <div class="chip" data-value="30">30</div>
+                <div class="chip" data-value="custom">Custom</div>
+            </div>
+            <div class="custom-count-input" id="customCountWrapper">
+                <input type="number" id="customCount" min="1" max="100" placeholder="ระบุจำนวน...">
+            </div>
+        </div>
+
+        <!-- Custom Input -->
+        <div class="card">
+            <div class="card-title">Custom Keyword (Optional)</div>
+            <label for="customKeyword">พิมพ์ Keyword เองตามต้องการ</label>
+            <textarea id="customKeyword" placeholder="พิมพ์ keyword ที่ต้องการ เช่น Colorado River rapids, Yellowstone hot springs..."></textarea>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="card">
+            <div class="btn-group">
+                <button class="btn btn-primary" onclick="generatePrompt()">
+                    <span class="btn-icon">🎲</span> สร้าง Prompt
+                </button>
+                <button class="btn btn-secondary" onclick="copyText()">
+                    <span class="btn-icon">📋</span> คัดลอก
+                </button>
+            </div>
+        </div>
+
+        <!-- Output -->
+        <div class="card output-section" id="outputSection">
+            <div class="output-label">Generated Prompt — พร้อมคัดลอก</div>
+            <div class="output-box" id="outputBox">ข้อความจะแสดงที่นี่...</div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast">✅ คัดลอกข้อความเรียบร้อยแล้ว!</div>
+
+
+    <script>
+    // ============================================================
+    // KEYWORDS DATABASE (85 keywords, 8 categories)
+    // ============================================================
+    const keywordDB = {
+        national_parks: [
+            "Grand Canyon sunset",
+            "Yellowstone geyser eruption",
+            "Yosemite waterfall",
+            "Great Smoky Mountains autumn foliage",
+            "Zion National Park red rock canyon",
+            "Glacier National Park lake reflection",
+            "Bryce Canyon hoodoos",
+            "Acadia National Park rocky coast",
+            "Arches National Park delicate arch",
+            "Rocky Mountain National Park alpine meadow",
+            "Sequoia National Park giant trees",
+            "Canyonlands Utah mesa overlook",
+            "Great Sand Dunes Colorado",
+            "Crater Lake Oregon",
+            "Shenandoah Valley blue ridge sunrise"
+        ],
+        mountains: [
+            "Mount Rainier wildflower meadow",
+            "Denali Alaska tundra",
+            "Grand Teton mountain range reflection",
+            "Mount Hood Oregon alpenglow",
+            "Appalachian Trail misty morning",
+            "Sierra Nevada granite peaks",
+            "Cascade Range volcanic peaks",
+            "Rocky Mountains Colorado aspens",
+            "White Mountains New Hampshire",
+            "Mount Whitney summit sunrise"
+        ],
+        deserts: [
+            "Antelope Canyon light beams",
+            "Death Valley sand dunes",
+            "Monument Valley buttes",
+            "Joshua Tree desert night sky",
+            "Horseshoe Bend Arizona",
+            "White Sands New Mexico dunes",
+            "Moab Utah red desert",
+            "Painted Desert Arizona layers",
+            "Saguaro cactus Sonoran Desert",
+            "Valley of Fire Nevada sandstone"
+        ],
+        coasts: [
+            "Big Sur California coast cliffs",
+            "Hawaii volcano lava ocean",
+            "Niagara Falls mist rainbow",
+            "Florida Keys turquoise ocean",
+            "Oregon coast sea stacks",
+            "Outer Banks North Carolina lighthouse",
+            "Na Pali Coast Kauai Hawaii",
+            "Acadia Maine rocky shore",
+            "California Pacific coast highway",
+            "Olympic coast Washington"
+        ],
+        forests: [
+            "Redwood forest giant trees",
+            "Olympic rainforest moss ferns",
+            "Pacific Northwest misty forest",
+            "Savannah Georgia live oak Spanish moss",
+            "Great Smoky Mountains old growth forest",
+            "Tongass Alaska temperate rainforest",
+            "Muir Woods California redwood canopy",
+            "Hoh Rainforest Washington",
+            "Vermont forest birch trees autumn",
+            "Everglades mangrove cypress swamp"
+        ],
+        lakes: [
+            "Lake Tahoe crystal clear water",
+            "Crater Lake Oregon deep blue",
+            "Minnesota Boundary Waters",
+            "Glacier National Park turquoise lake",
+            "Lake Powell Utah red canyon",
+            "Mono Lake California tufa towers",
+            "Flathead Lake Montana",
+            "Lake Michigan sand dunes",
+            "Mirror Lake Yosemite reflection",
+            "Oxbow Bend Grand Teton autumn"
+        ],
+        wildlife: [
+            "Bald eagle fishing Alaska",
+            "Grizzly bear salmon stream",
+            "Wild mustangs running desert",
+            "Elk bugling Rocky Mountain",
+            "Manatee crystal clear spring Florida",
+            "Bison herd Yellowstone winter",
+            "Humpback whale breaching Alaska",
+            "Wolf pack Yellowstone snow",
+            "Sandhill cranes migration Nebraska",
+            "Sea otter kelp forest California"
+        ],
+        seasons: [
+            "New England autumn foliage covered bridge",
+            "Cherry blossom Washington DC spring",
+            "Colorado aspen grove golden autumn",
+            "Wildflower super bloom California",
+            "Minnesota frozen lake northern lights",
+            "Florida Everglades spring nesting birds",
+            "Smoky Mountains spring dogwood bloom",
+            "Utah canyon winter snow red rock",
+            "Pacific Northwest spring waterfalls",
+            "Alaska midnight sun summer tundra"
+        ]
+    };
+
+    // ============================================================
+    // STYLE NAMES (for prompt output)
+    // ============================================================
+    const styleNames = {
+        realistic: "Realistic style",
+        dark_moody: "Dark and moody style",
+        cinematic: "Cinematic style",
+        fine_art: "Fine art style",
+        ethereal: "Ethereal and dreamy style",
+        aerial: "Aerial drone perspective",
+        long_exposure: "Long exposure style",
+        analog_film: "Analog film style",
+        minimalist: "Minimalist style",
+        bw: "Black and white style",
+        golden_hour: "Golden hour style",
+        astro: "Astrophotography style",
+        infrared: "Infrared photography style",
+        watercolor: "Watercolor painting style",
+        oil_painting: "Oil painting style",
+        surreal: "Surreal fantasy style"
+    };
+
+    // ============================================================
+    // HASHTAG DATABASE (by category)
+    // ============================================================
+    const hashtagDB = {
+        national_parks: ["#NationalParks", "#ExploreAmerica", "#ParkLife", "#NaturalWonders", "#USNature", "#FindYourPark", "#AmericaTheBeautiful", "#NationalParkService"],
+        mountains: ["#MountainLife", "#PeakViews", "#AlpineBeauty", "#MountainScenery", "#EpicMountains", "#SummitViews", "#MountainMagic", "#HighAltitude"],
+        deserts: ["#DesertVibes", "#DesertBeauty", "#RedRockCountry", "#DesertLandscape", "#AridBeauty", "#SouthwestUSA", "#DesertMagic", "#DesertSunset"],
+        coasts: ["#CoastalVibes", "#OceanLife", "#BeachSunset", "#SeasideBeauty", "#CoastLife", "#OceanView", "#WavesAndShores", "#CoastalLiving"],
+        forests: ["#ForestVibes", "#IntoTheWoods", "#ForestBathing", "#TreeHugger", "#DeepForest", "#NatureTherapy", "#WoodlandMagic", "#ForestMood"],
+        lakes: ["#LakeLife", "#LakeViews", "#ReflectionPerfection", "#CalmWaters", "#LakeSunset", "#MirrorLake", "#WaterReflection", "#PeacefulWaters"],
+        wildlife: ["#WildlifePhotography", "#WildAmerica", "#AnimalKingdom", "#NatureWildlife", "#WildAndFree", "#WildlifeLovers", "#AmericanWildlife", "#NaturalHabitat"],
+        seasons: ["#SeasonsChange", "#NatureSeasons", "#AutumnVibes", "#SpringBloom", "#WinterWonderland", "#SummerVibes", "#SeasonalBeauty", "#NatureCycles"]
+    };
+
+    // ============================================================
+    // CAPTION TEMPLATES (mood-based)
+    // ============================================================
+    const captionTemplates = {
+        realistic: [
+            "Nature doesn't need a filter — just your full attention. 🌿✨ Take a breath and let this view reset your soul.",
+            "Some views hit different when you just stop and stare. 🏞️💫 America's landscapes never disappoint.",
+            "This is what 'living wallpaper' should actually look like. 📱🌄 Straight from the heart of America.",
+            "The real world has better resolution than any screen. 🌎📸 But this comes pretty close.",
+            "POV: You just found your new Lock Screen. 🔒🏔️ You're welcome."
+        ],
+        dark_moody: [
+            "When nature goes dark mode, it hits different. 🖤🌑 Moody landscapes for moody souls.",
+            "Not everything beautiful is bright. 🌫️🖤 Sometimes the shadows tell the best story.",
+            "Dark skies, deep vibes. 🌑✨ Nature's dramatic side is unmatched.",
+            "Embrace the darkness — there's beauty in the shadows. 🖤🌿 Moody nature at its finest.",
+            "Storm clouds and soul stirring views. ⛈️🖤 This is nature in beast mode."
+        ],
+        cinematic: [
+            "This isn't a movie set — it's just America being cinematic. 🎬🎞️ Nature really said 'action!'",
+            "If landscapes had a director, this would be the Oscar winner. 🏆🎬 Pure cinematic magic.",
+            "Widescreen vibes only. 🎞️✨ Nature's cinematography is always on point.",
+            "Plot twist: This is real life, not a movie. 🎬🌄 America's landscapes are built different.",
+            "Directed by Mother Nature. Starring: This insane view. 🎬🍿 No CGI needed."
+        ],
+        fine_art: [
+            "Some landscapes belong in a museum. 🖼️✨ This is one of them.",
+            "Nature is the original fine artist. 🎨🖼️ Gallery-worthy views, zero admission fee.",
+            "Frame it. Hang it. Stare at it forever. 🖼️💫 Fine art straight from nature.",
+            "When the landscape looks like a masterpiece. 🎨✨ No brush needed.",
+            "This belongs on a gallery wall, not just your phone. 🖼️🌿 But your phone works too."
+        ],
+        ethereal: [
+            "Feels like walking through a dream you don't want to wake up from. ✨💭 Pure ethereal energy.",
+            "Soft light, quiet magic. ✨🌿 Nature's dreamiest moments captured.",
+            "If peace had a visual, this would be it. 🕊️✨ Ethereal and endless.",
+            "Somewhere between reality and a dream. 💫🌫️ Nature's softest side.",
+            "Floating through nature's most delicate moments. ✨🍃 Dreamy doesn't begin to cover it."
+        ],
+        aerial: [
+            "The higher you go, the more beautiful it gets. 🛩️🌍 Drone views that hit different.",
+            "Earth from above is a whole different vibe. 🌎✨ Perspective changes everything.",
+            "New perspective, new appreciation. 🛩️💫 America looks incredible from up here.",
+            "Bird's eye view of pure beauty. 🦅🌍 Sometimes you need to rise above to see the magic.",
+            "Above the noise, there's only beauty. 🛩️✨ Aerial views that take your breath away."
+        ],
+        long_exposure: [
+            "Time slows down when nature flows. 💫🌊 Long exposure magic at its finest.",
+            "Silky smooth and soul soothing. 🌊✨ When you let time paint the picture.",
+            "Patience creates art. ⏳💫 Long exposure turns nature into liquid silk.",
+            "Water turns to glass, clouds turn to silk. 💫🌊 The beauty of slowing down.",
+            "Stop rushing. Let the moment flow. 🌊✨ Long exposure views that calm the soul."
+        ],
+        analog_film: [
+            "Vintage vibes, timeless views. 📼🌿 Shot on nature's favorite film stock.",
+            "There's something about analog that digital can't touch. 🎞️✨ Warm, grainy, perfect.",
+            "Film grain and golden tones. 📼💫 Nostalgia in every pixel.",
+            "Rewind to a simpler time. 🎞️🌄 Analog warmth meets American wilderness.",
+            "If your grandpa had a camera, this is what he'd shoot. 📼✨ Timeless and beautiful."
+        ],
+        minimalist: [
+            "Less is more. Always. ◻️✨ Minimal landscapes, maximum impact.",
+            "Strip away the noise, find the beauty. ◻️🌿 Nature's minimalist side.",
+            "Empty space, full soul. ✨◻️ When simplicity speaks louder than chaos.",
+            "The quieter it gets, the more you can see. 🤫✨ Minimal nature perfection.",
+            "One subject. One mood. One perfect moment. ◻️💫 That's all you need."
+        ],
+        bw: [
+            "Remove the color. Keep the soul. ⬛⬜ Black and white hits different.",
+            "Monochrome magic — where contrast tells the story. ⬛✨ Raw and powerful.",
+            "Some things don't need color to be beautiful. ⬛⬜ Nature in its purest form.",
+            "Black, white, and everything between. ⬛💫 Timeless photography at its best.",
+            "When you strip away color, only truth remains. ⬛✨ Nature's honest portrait."
+        ],
+        golden_hour: [
+            "Golden hour never misses. 🌅✨ That warm glow hits every single time.",
+            "The sun said 'let me make this beautiful' and delivered. 🌅💛 Golden hour magic.",
+            "Chasing golden light across America's landscapes. 🌅✨ It's always worth it.",
+            "Everything looks better dipped in gold. 🌅💫 Golden hour is nature's Instagram filter.",
+            "That 20-minute window where everything turns to gold. ✨🌅 Pure magic."
+        ],
+        astro: [
+            "The universe is showing off tonight. 🌌✨ Stars above America's finest landscapes.",
+            "Look up. The sky is putting on a show. 🌠🌌 Astrophotography at its finest.",
+            "Milky Way vibes and midnight magic. 🌌💫 The night sky never gets old.",
+            "Billions of stars, one perfect moment. 🌌✨ This is why dark skies matter.",
+            "When the stars come out, the magic begins. ✨🌌 Night sky over America."
+        ],
+        infrared: [
+            "Nature in a parallel universe. 🔴✨ Infrared turns the world upside down.",
+            "What if forests were white and skies were dark? 🔴🌿 Welcome to infrared.",
+            "Seeing the unseen. 🔴💫 Infrared reveals nature's hidden frequencies.",
+            "A world you've never seen before. 🔴✨ Infrared photography is pure sci-fi.",
+            "Reality, reimagined. 🔴🌍 When you see beyond visible light."
+        ],
+        watercolor: [
+            "Nature painted with water and light. 🎨💧 Soft, flowing, beautiful.",
+            "If Mother Nature picked up a brush. 🎨✨ Watercolor dreams of American landscapes.",
+            "Soft washes and gentle tones. 🎨🌿 Nature reimagined as fine art.",
+            "Flowing pigment and peaceful vibes. 🎨💧 Watercolor landscapes for the soul.",
+            "Art meets nature in the most beautiful way. 🎨✨ Painted by imagination."
+        ],
+        oil_painting: [
+            "Thick brushstrokes and rich colors. 🖌️✨ Nature as a classical masterpiece.",
+            "The old masters would approve. 🖌️🎨 Oil painting vibes from America's landscapes.",
+            "Canvas-worthy views, painted by nature. 🖌️💫 Classical beauty meets wild America.",
+            "Rich pigment, bold texture, timeless beauty. 🖌️✨ Oil painting dreams.",
+            "If the Hudson River School painted your Lock Screen. 🖌️🎨 Pure Americana."
+        ],
+        surreal: [
+            "Reality is just a suggestion. 🌀✨ Surreal landscapes from another dimension.",
+            "Somewhere between a dream and a hallucination. 🌀💫 Nature goes surreal.",
+            "This can't be real... but what if it is? 🌀🌍 Surreal nature vibes.",
+            "When nature breaks its own rules. 🌀✨ Impossible and beautiful.",
+            "Beyond reality, beyond imagination. 🌀💫 Surreal landscapes that defy logic."
+        ]
+    };
+
+    // ============================================================
+    // STATE
+    // ============================================================
+    let selectedCategory = 'all';
+    let selectedStyle = 'realistic';
+    let selectedCount = 20;
+
+    // ============================================================
+    // FUNCTIONS
+    // ============================================================
+    function getAllKeywords() {
+        let all = [];
+        Object.values(keywordDB).forEach(arr => all = all.concat(arr));
+        return all;
+    }
+
+    function getKeywordCategory(keyword) {
+        for (const [cat, keywords] of Object.entries(keywordDB)) {
+            if (keywords.includes(keyword)) return cat;
+        }
+        return 'national_parks';
+    }
+
+    function populateDropdown() {
+        const select = document.getElementById('keywordSelect');
+        select.innerHTML = '<option value="">-- เลือก Keyword --</option>';
+        let keywords = selectedCategory === 'all' ? getAllKeywords() : (keywordDB[selectedCategory] || []);
+        keywords.forEach(kw => {
+            const opt = document.createElement('option');
+            opt.value = kw;
+            opt.textContent = kw;
+            select.appendChild(opt);
+        });
+    }
+
+    function getRandomHashtags(category, count = 5) {
+        let pool = [...(hashtagDB[category] || hashtagDB.national_parks)];
+        // Add some general nature hashtags
+        const general = ["#NaturePhotography", "#AmericanLandscapes", "#USNature", "#NatureLovers", "#LandscapePhotography", "#iPhone壁紙", "#PhoneWallpaper", "#WallpaperOfTheDay", "#NatureAesthetic", "#ExploreMore"];
+        pool = pool.concat(general);
+        const shuffled = pool.sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, count).join(" ");
+    }
+
+    function getCaption(style) {
+        const templates = captionTemplates[style] || captionTemplates.realistic;
+        return templates[Math.floor(Math.random() * templates.length)];
+    }
+
+    function generatePrompt() {
+        const customKeyword = document.getElementById('customKeyword').value.trim();
+        const selectedKeyword = document.getElementById('keywordSelect').value;
+
+        let keyword = customKeyword || selectedKeyword;
+
+        if (!keyword) {
+            // Random from selected category
+            let keywords = selectedCategory === 'all' ? getAllKeywords() : (keywordDB[selectedCategory] || []);
+            if (keywords.length === 0) {
+                showOutput('กรุณาเลือกหมวดหมู่หรือพิมพ์ keyword');
+                return;
+            }
+            keyword = keywords[Math.floor(Math.random() * keywords.length)];
+        }
+
+        const styleName = styleNames[selectedStyle] || "Realistic style";
+        const category = getKeywordCategory(keyword) || selectedCategory;
+        const effectiveCategory = category === 'all' ? 'national_parks' : category;
+
+        // Build the full prompt
+        let output = '';
+        output += `Please create ${selectedCount} ${styleName.toLowerCase()} iPhone wallpaper images based on the following keyword:\n`;
+        output += `Keyword: ${keyword}\n`;
+        output += `Image requirements:\n\n`;
+        output += `${styleName}\n`;
+        output += `No people in the image\n`;
+        output += `No text, letters, logos, or watermarks in the image\n`;
+        output += `Suitable for use as an iPhone wallpaper\n`;
+        output += `Vertical composition, optimized for phone screens\n`;
+        output += `Use a visual tone and aesthetic that appeals to a US audience\n`;
+        output += `Each image must be clearly different from the others\n`;
+        output += `Avoid repeating the same angle, background, lighting, or composition\n`;
+        output += `Make the images look natural, beautiful, clean, and high-quality\n`;
+        output += `In addition, please create only one overall English caption for the entire image set.\n`;
+        output += `Caption requirements:\n\n`;
+        output += `Written in natural US English\n`;
+        output += `Suitable for social media\n`;
+        output += `Include emojis\n`;
+        output += `Match the overall mood of the image set\n`;
+        output += `Include 5 relevant hashtags\n`;
+        output += `Hashtags should be appropriate for a US audience`;
+
+        showOutput(output);
+    }
+
+    function showOutput(text) {
+        const outputSection = document.getElementById('outputSection');
+        const outputBox = document.getElementById('outputBox');
+        outputBox.textContent = text;
+        outputSection.classList.add('visible');
+        setTimeout(() => {
+            outputSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }, 100);
+    }
+
+    function copyText() {
+        const text = document.getElementById('outputBox').textContent;
+        if (!text || text === 'ข้อความจะแสดงที่นี่...') return;
+
+        navigator.clipboard.writeText(text).then(showToast).catch(() => {
+            const ta = document.createElement('textarea');
+            ta.value = text; document.body.appendChild(ta);
+            ta.select(); document.execCommand('copy');
+            document.body.removeChild(ta); showToast();
+        });
+    }
+
+    function showToast() {
+        const toast = document.getElementById('toast');
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    // ============================================================
+    // EVENT LISTENERS
+    // ============================================================
+    document.querySelectorAll('#categoryGrid .chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            document.querySelectorAll('#categoryGrid .chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            selectedCategory = this.dataset.category;
+            populateDropdown();
+        });
+    });
+
+    document.querySelectorAll('#styleGrid .chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            document.querySelectorAll('#styleGrid .chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            selectedStyle = this.dataset.style;
+        });
+    });
+
+    document.querySelectorAll('#countGrid .chip').forEach(chip => {
+        chip.addEventListener('click', function() {
+            document.querySelectorAll('#countGrid .chip').forEach(c => c.classList.remove('active'));
+            this.classList.add('active');
+            const value = this.dataset.value;
+            const customWrapper = document.getElementById('customCountWrapper');
+            if (value === 'custom') {
+                customWrapper.classList.add('show');
+                document.getElementById('customCount').focus();
+                selectedCount = parseInt(document.getElementById('customCount').value) || 20;
+            } else {
+                customWrapper.classList.remove('show');
+                selectedCount = parseInt(value);
+            }
+        });
+    });
+
+    document.getElementById('customCount').addEventListener('input', function() {
+        selectedCount = parseInt(this.value) || 20;
+    });
+
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) generatePrompt();
+    });
+
+    // Init
+    populateDropdown();
+    </script>
+</body>
+</html>

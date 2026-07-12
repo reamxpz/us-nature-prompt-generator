@@ -159,6 +159,18 @@
         .btn-reroll:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); transform: rotate(180deg); }
         .btn-reroll:active { transform: rotate(180deg) scale(0.9); }
 
+        /* Reset button */
+        .btn-reset {
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+            width: 100%; margin-top: 16px; padding: 14px;
+            font-size: 15px; font-weight: 500; font-family: inherit;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-muted);
+            cursor: pointer; transition: var(--transition);
+        }
+        .btn-reset:hover { background: rgba(255,59,48,0.08); border-color: rgba(255,59,48,0.3); color: #ff3b30; }
+        .btn-reset:active { transform: scale(0.98); }
+
         .output-section { opacity: 0; transform: translateY(20px); transition: all 0.5s cubic-bezier(0.25,0.1,0.25,1); pointer-events: none; }
         .output-section.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
         .output-label { font-size: 13px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-muted); margin-bottom: 12px; }
@@ -318,6 +330,13 @@
         <div class="card output-section" id="outputSection">
             <div class="output-label">Generated Prompt — พร้อมคัดลอก</div>
             <div class="output-box" id="outputBox">ข้อความจะแสดงที่นี่...</div>
+            <button class="btn-reset" onclick="resetAll()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/>
+                    <path d="M3 3v5h5"/>
+                </svg>
+                เริ่มใหม่
+            </button>
         </div>
     </div>
 
@@ -815,6 +834,40 @@
         const toast = document.getElementById('toast');
         toast.classList.add('show');
         setTimeout(() => toast.classList.remove('show'), 2500);
+    }
+
+    function resetAll() {
+        // Reset category
+        selectedCategory = 'all';
+        document.querySelectorAll('#categoryGrid .chip').forEach(c => c.classList.remove('active'));
+        document.querySelector('#categoryGrid .chip[data-category="all"]').classList.add('active');
+
+        // Reset style
+        selectedStyle = 'realistic';
+        document.querySelectorAll('#styleGrid .chip').forEach(c => c.classList.remove('active'));
+        document.querySelector('#styleGrid .chip[data-style="realistic"]').classList.add('active');
+
+        // Reset count
+        selectedCount = 20;
+        document.querySelectorAll('#countGrid .chip').forEach(c => c.classList.remove('active'));
+        document.querySelector('#countGrid .chip[data-value="20"]').classList.add('active');
+        document.getElementById('customCountWrapper').classList.remove('show');
+
+        // Reset keyword
+        document.getElementById('keywordSelect').value = '';
+        document.getElementById('customKeyword').value = '';
+        document.getElementById('keywordPreview').classList.remove('visible');
+        document.getElementById('keywordPreviewText').textContent = '';
+
+        // Hide output
+        document.getElementById('outputSection').classList.remove('visible');
+        document.getElementById('outputBox').textContent = 'ข้อความจะแสดงที่นี่...';
+
+        // Repopulate dropdown
+        populateDropdown();
+
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     // ============================================================

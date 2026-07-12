@@ -112,32 +112,52 @@
         .btn-secondary:hover { background: rgba(255,255,255,0.15); border-color: rgba(255,255,255,0.2); transform: translateY(-1px); }
         .btn-icon { font-size: 18px; }
 
-        .btn-random {
-            padding: 12px 24px; font-size: 15px; font-weight: 600; font-family: inherit;
-            border: none; border-radius: 100px; cursor: pointer; transition: var(--transition);
-            display: inline-flex; align-items: center; gap: 8px;
-            background: linear-gradient(135deg, #5e5ce6, #bf5af2); color: #fff;
-            box-shadow: 0 4px 16px rgba(94, 92, 230, 0.3);
+        /* Keyword row with shuffle button */
+        .keyword-row {
+            display: flex; gap: 10px; align-items: stretch;
         }
-        .btn-random:hover { transform: translateY(-1px); box-shadow: 0 6px 24px rgba(94, 92, 230, 0.4); }
-        .btn-random:active { transform: scale(0.95); }
+        .keyword-row select { flex: 1; }
 
-        .btn-random-sm {
-            width: 44px; height: 44px; font-size: 20px;
-            border: 1px solid var(--border); border-radius: 50%; cursor: pointer;
-            background: rgba(255,255,255,0.06); color: var(--text-primary);
-            display: inline-flex; align-items: center; justify-content: center;
-            transition: var(--transition);
+        .btn-shuffle {
+            width: 52px; min-width: 52px; height: auto;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            border-radius: var(--radius-sm); color: var(--text-secondary);
+            cursor: pointer; transition: var(--transition);
         }
-        .btn-random-sm:hover { background: rgba(255,255,255,0.12); transform: rotate(180deg); }
+        .btn-shuffle:hover {
+            background: var(--accent); border-color: var(--accent); color: #fff;
+            box-shadow: 0 4px 16px var(--accent-glow); transform: scale(1.05);
+        }
+        .btn-shuffle:active { transform: scale(0.95); }
 
+        /* Keyword preview */
         .keyword-preview {
-            margin-top: 16px; padding: 16px 20px;
-            background: rgba(94, 92, 230, 0.1); border: 1px solid rgba(94, 92, 230, 0.3);
-            border-radius: var(--radius-sm); animation: fadeIn 0.3s ease;
+            display: none; margin-top: 14px; padding: 14px 18px;
+            background: rgba(255,255,255,0.04); border: 1px solid var(--border);
+            border-radius: var(--radius-sm);
+            flex-direction: row; align-items: center; justify-content: space-between; gap: 12px;
         }
-        .keyword-preview-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; color: #bf5af2; margin-bottom: 6px; }
-        .keyword-preview-text { font-size: 17px; font-weight: 500; color: var(--text-primary); line-height: 1.4; }
+        .keyword-preview.visible { display: flex; animation: fadeIn 0.3s ease; }
+        .keyword-preview-inner { display: flex; align-items: center; gap: 10px; flex: 1; min-width: 0; }
+        .keyword-preview-badge {
+            font-size: 10px; font-weight: 700; letter-spacing: 0.08em;
+            padding: 4px 8px; border-radius: 4px;
+            background: var(--accent); color: #fff; white-space: nowrap;
+        }
+        .keyword-preview-text {
+            font-size: 15px; font-weight: 500; color: var(--text-primary);
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+        .btn-reroll {
+            width: 36px; height: 36px; min-width: 36px;
+            display: flex; align-items: center; justify-content: center;
+            background: rgba(255,255,255,0.06); border: 1px solid var(--border);
+            border-radius: 50%; color: var(--text-secondary);
+            cursor: pointer; transition: var(--transition);
+        }
+        .btn-reroll:hover { background: rgba(255,255,255,0.12); color: var(--text-primary); transform: rotate(180deg); }
+        .btn-reroll:active { transform: rotate(180deg) scale(0.9); }
 
         .output-section { opacity: 0; transform: translateY(20px); transition: all 0.5s cubic-bezier(0.25,0.1,0.25,1); pointer-events: none; }
         .output-section.visible { opacity: 1; transform: translateY(0); pointer-events: all; }
@@ -207,20 +227,30 @@
         <div class="card">
             <div class="card-title">Keyword Library</div>
             <label for="keywordSelect">เลือกจากคลังคีย์เวิร์ด หรือกดสุ่ม</label>
-            <select id="keywordSelect">
-                <option value="">-- เลือก Keyword --</option>
-            </select>
-            <div style="margin-top: 16px; display: flex; align-items: center; gap: 12px;">
-                <button class="btn btn-random" onclick="randomKeyword()">
-                    <span class="btn-icon">🎲</span> สุ่ม Keyword
-                </button>
-                <button class="btn btn-random-sm" onclick="randomKeyword()" title="สุ่มใหม่" id="rerollBtn" style="display:none;">
-                    🔄
+            <div class="keyword-row">
+                <select id="keywordSelect">
+                    <option value="">-- เลือก Keyword --</option>
+                </select>
+                <button class="btn-shuffle" onclick="randomKeyword()" title="สุ่ม Keyword ใหม่">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <polyline points="16 3 21 3 21 8"></polyline>
+                        <line x1="4" y1="20" x2="21" y2="3"></line>
+                        <polyline points="21 16 21 21 16 21"></polyline>
+                        <line x1="15" y1="15" x2="21" y2="21"></line>
+                        <line x1="4" y1="4" x2="9" y2="9"></line>
+                    </svg>
                 </button>
             </div>
-            <div class="keyword-preview" id="keywordPreview" style="display:none;">
-                <div class="keyword-preview-label">Keyword ที่สุ่มได้:</div>
-                <div class="keyword-preview-text" id="keywordPreviewText"></div>
+            <div class="keyword-preview" id="keywordPreview">
+                <div class="keyword-preview-inner">
+                    <div class="keyword-preview-badge">RANDOM</div>
+                    <div class="keyword-preview-text" id="keywordPreviewText"></div>
+                </div>
+                <button class="btn-reroll" onclick="randomKeyword()" title="สุ่มใหม่">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M21.5 2v6h-6M2.5 22v-6h6M2 11.5a10 10 0 0 1 18.8-4.3M22 12.5a10 10 0 0 1-18.8 4.2"/>
+                    </svg>
+                </button>
             </div>
         </div>
 
@@ -702,19 +732,17 @@
         // Show preview
         const preview = document.getElementById('keywordPreview');
         const previewText = document.getElementById('keywordPreviewText');
-        const rerollBtn = document.getElementById('rerollBtn');
 
         previewText.textContent = randomKw;
-        preview.style.display = 'block';
-        rerollBtn.style.display = 'inline-flex';
+        preview.classList.add('visible');
 
         // Set dropdown to match
         const select = document.getElementById('keywordSelect');
         select.value = randomKw;
 
-        // Add animation
+        // Re-trigger animation
         preview.style.animation = 'none';
-        preview.offsetHeight; // trigger reflow
+        preview.offsetHeight;
         preview.style.animation = 'fadeIn 0.3s ease';
     }
 
